@@ -13,6 +13,9 @@ import (
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/cache"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/provider"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/repository"
+	userapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/api"
+	userrepo "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/repository"
+	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/security"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/database"
 )
 
@@ -34,9 +37,21 @@ func main() {
 	googleProvider := provider.NewGoogleBooksProvider(3 * time.Second)
 	openLibraryProvider := provider.NewOpenLibraryProvider(3 * time.Second)
 	externalProvider := provider.NewCompositeProvider(googleProvider, openLibraryProvider)
-	service := bookapi.NewService(repo, memoryCache, externalProvider)
+	bookService := bookapi.NewService(repo, memoryCache, externalProvider)
 
-	if err := api.Execute(ctx, service); err != nil {
+	userRepository := userrepo.NewDBStore(db)
+	tokenManager, err := security.NewTokenManagerFromEnv()
+	if err != nil {
+		log.Fatalf("erro ao configurar tokens JWT: %v", err)
+	}
+	loginGuard := security.NewLoginGuard()
+	userService, err := userapi.NewService(userRepository, tokenManager, loginGuard)
+	if err != nil {
+		log.Fatalf("erro ao configurar serviço de usuários: %v", err)
+	}
+	authMiddleware := userapi.NewAuthMiddleware(tokenManager, userService)
+
+	if err := api.Execute(ctx, bookService, userService, authMiddleware); err != nil {
 		log.Fatalf("erro ao executar API: %v", err)
 	}
 }

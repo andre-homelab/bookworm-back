@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/andre-felipe-wonsik-alves/bookworm-back/docs"
 	bookapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/api"
+	userapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -24,27 +25,47 @@ import (
 
 // @host      localhost:8080
 // @BasePath  /api/v1
-func Execute(ctx context.Context, service *bookapi.Service) error {
-	bookHandler := bookapi.NewBookHandler(service)
+func Execute(ctx context.Context, bookService *bookapi.Service, userService *userapi.Service, authMiddleware *userapi.AuthMiddleware) error {
+	bookHandler := bookapi.NewBookHandler(bookService)
+	userHandler := userapi.NewUserHandler(userService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 	r.Use(middleware.RequestID)
+	r.Use(securityHeaders)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 	))
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Route("/books", func(r chi.Router) {
-			r.Get("/", bookHandler.ListBooks)
-			r.Post("/", bookHandler.CreateBook)
-			r.Put("/{id}", bookHandler.UpdateBook)
-			r.Delete("/{id}", bookHandler.DeleteBook)
-			r.Get("/search", bookHandler.SearchByTitleOrAuthor)
-			r.Get("/search/isbn/{isbn}", bookHandler.SearchByISBN)
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", userHandler.Register)
+			r.Post("/login", userHandler.Login)
+			r.Post("/refresh", userHandler.Refresh)
+		})
+
+		r.Group(func(private chi.Router) {
+			private.Use(authMiddleware.RequireAuth)
+
+			private.Post("/auth/logout", userHandler.Logout)
+
+			private.Route("/users", func(r chi.Router) {
+				r.Get("/me", userHandler.GetMe)
+				r.Put("/me", userHandler.UpdateMe)
+				r.Put("/me/password", userHandler.UpdatePassword)
+			})
+
+			private.Route("/books", func(r chi.Router) {
+				r.Get("/", bookHandler.ListBooks)
+				r.Post("/", bookHandler.CreateBook)
+				r.Put("/{id}", bookHandler.UpdateBook)
+				r.Delete("/{id}", bookHandler.DeleteBook)
+				r.Get("/search", bookHandler.SearchByTitleOrAuthor)
+				r.Get("/search/isbn/{isbn}", bookHandler.SearchByISBN)
+			})
 		})
 	})
 
@@ -78,4 +99,13 @@ func Execute(ctx context.Context, service *bookapi.Service) error {
 	}
 
 	return nil
+}
+
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		next.ServeHTTP(w, r)
+	})
 }
