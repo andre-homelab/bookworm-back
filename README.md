@@ -1,7 +1,5 @@
 # bookworm-back
-<<<<<<< Updated upstream
 API rest em GO
-=======
 
 Backend REST em Go para gerenciamento de livros pessoais.
 
@@ -24,4 +22,3 @@ make api
 - `POST /api/v1/books`
 - `GET /api/v1/books/search/isbn/{isbn}`
 - `GET /api/v1/books/search?q=clean+code`
->>>>>>> Stashed changes
