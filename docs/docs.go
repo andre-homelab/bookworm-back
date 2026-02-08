@@ -20,6 +20,185 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Autentica usuário e retorna access/refresh tokens JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Credenciais",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.LoginResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "description": "Efetua logout no cliente autenticado",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Gera novo par de tokens a partir de refresh token válido",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh de token",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/security.TokenPair"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Cria uma nova conta de usuário sem autenticar automaticamente",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Registrar usuário",
+                "parameters": [
+                    {
+                        "description": "Dados de registro",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/api.UserPublic"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books": {
             "get": {
                 "description": "Retorna todos os livros armazenados no banco",
@@ -43,7 +222,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     }
                 }
@@ -81,13 +260,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     }
                 }
@@ -125,19 +304,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     }
                 }
@@ -172,19 +351,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     }
                 }
@@ -231,19 +410,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     }
                 }
@@ -273,19 +452,168 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me": {
+            "get": {
+                "description": "Retorna dados do usuário autenticado",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Perfil do usuário logado",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.UserPublic"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Atualiza nome e email do usuário autenticado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Atualizar perfil",
+                "parameters": [
+                    {
+                        "description": "Dados do perfil",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UpdateMeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.UserPublic"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/password": {
+            "put": {
+                "description": "Atualiza senha do usuário autenticado exigindo senha atual",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Atualizar senha",
+                "parameters": [
+                    {
+                        "description": "Dados da senha",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UpdatePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
                         }
                     }
                 }
@@ -322,16 +650,53 @@ const docTemplate = `{
                 }
             }
         },
-        "api.ErrorResponse": {
+        "api.LoginRequest": {
             "type": "object",
             "properties": {
-                "error": {
+                "email": {
                     "type": "string",
-                    "example": "dados inválidos"
+                    "example": "user@example.com"
                 },
-                "message": {
+                "password": {
                     "type": "string",
-                    "example": "title é obrigatório"
+                    "example": "Senha123"
+                }
+            }
+        },
+        "api.LoginResult": {
+            "type": "object",
+            "properties": {
+                "tokens": {
+                    "$ref": "#/definitions/security.TokenPair"
+                },
+                "user": {
+                    "$ref": "#/definitions/api.UserPublic"
+                }
+            }
+        },
+        "api.RefreshRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string",
+                    "example": "token..."
+                }
+            }
+        },
+        "api.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Usuário Teste"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "Senha123"
                 }
             }
         },
@@ -361,6 +726,87 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "example": "Clean Code"
+                }
+            }
+        },
+        "api.UpdateMeRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "new-email@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Novo Nome"
+                }
+            }
+        },
+        "api.UpdatePasswordRequest": {
+            "type": "object",
+            "properties": {
+                "current_password": {
+                    "type": "string",
+                    "example": "Senha123"
+                },
+                "new_password": {
+                    "type": "string",
+                    "example": "NovaSenha123"
+                }
+            }
+        },
+        "api.UserPublic": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "email_verified": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "last_login_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "dados inválidos"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "title é obrigatório"
+                }
+            }
+        },
+        "github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "dados inválidos"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "campo inválido"
                 }
             }
         },
@@ -410,6 +856,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "security.TokenPair": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
                     "type": "string"
                 }
             }

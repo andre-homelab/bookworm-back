@@ -21,13 +21,38 @@ definitions:
         example: Clean Code
         type: string
     type: object
-  api.ErrorResponse:
+  api.LoginRequest:
     properties:
-      error:
-        example: dados inválidos
+      email:
+        example: user@example.com
         type: string
-      message:
-        example: title é obrigatório
+      password:
+        example: Senha123
+        type: string
+    type: object
+  api.LoginResult:
+    properties:
+      tokens:
+        $ref: '#/definitions/security.TokenPair'
+      user:
+        $ref: '#/definitions/api.UserPublic'
+    type: object
+  api.RefreshRequest:
+    properties:
+      refresh_token:
+        example: token...
+        type: string
+    type: object
+  api.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      name:
+        example: Usuário Teste
+        type: string
+      password:
+        example: Senha123
         type: string
     type: object
   api.UpdateBookRequest:
@@ -49,6 +74,61 @@ definitions:
         type: boolean
       title:
         example: Clean Code
+        type: string
+    type: object
+  api.UpdateMeRequest:
+    properties:
+      email:
+        example: new-email@example.com
+        type: string
+      name:
+        example: Novo Nome
+        type: string
+    type: object
+  api.UpdatePasswordRequest:
+    properties:
+      current_password:
+        example: Senha123
+        type: string
+      new_password:
+        example: NovaSenha123
+        type: string
+    type: object
+  api.UserPublic:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      id:
+        type: string
+      is_active:
+        type: boolean
+      last_login_at:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse:
+    properties:
+      error:
+        example: dados inválidos
+        type: string
+      message:
+        example: title é obrigatório
+        type: string
+    type: object
+  github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse:
+    properties:
+      error:
+        example: dados inválidos
+        type: string
+      message:
+        example: campo inválido
         type: string
     type: object
   models.Book:
@@ -84,6 +164,13 @@ definitions:
       updated_at:
         type: string
     type: object
+  security.TokenPair:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -95,6 +182,123 @@ info:
   title: Bookworm API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica usuário e retorna access/refresh tokens JWT
+      parameters:
+      - description: Credenciais
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.LoginResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Efetua logout no cliente autenticado
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Logout
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Gera novo par de tokens a partir de refresh token válido
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/security.TokenPair'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Refresh de token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova conta de usuário sem autenticar automaticamente
+      parameters:
+      - description: Dados de registro
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.UserPublic'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Registrar usuário
+      tags:
+      - Auth
   /books:
     get:
       description: Retorna todos os livros armazenados no banco
@@ -110,7 +314,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
       summary: Listar todos os livros
       tags:
       - Books
@@ -135,11 +339,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
       summary: Criar novo livro
       tags:
       - Books
@@ -160,15 +364,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
       summary: Remover livro por ID
       tags:
       - Books
@@ -198,15 +402,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
       summary: Atualizar livro por ID
       tags:
       - Books
@@ -232,15 +436,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
       summary: Buscar livros por título ou autor
       tags:
       - Books
@@ -264,16 +468,114 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_book_api.ErrorResponse'
       summary: Buscar livro por ISBN
       tags:
       - Books
+  /users/me:
+    get:
+      description: Retorna dados do usuário autenticado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.UserPublic'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Perfil do usuário logado
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Atualiza nome e email do usuário autenticado
+      parameters:
+      - description: Dados do perfil
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateMeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.UserPublic'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Atualizar perfil
+      tags:
+      - Users
+  /users/me/password:
+    put:
+      consumes:
+      - application/json
+      description: Atualiza senha do usuário autenticado exigindo senha atual
+      parameters:
+      - description: Dados da senha
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdatePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Atualizar senha
+      tags:
+      - Users
 swagger: "2.0"
