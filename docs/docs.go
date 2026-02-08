@@ -65,6 +65,103 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/books/search": {
+            "get": {
+                "description": "Busca com estratégia de cache em 3 níveis (RAM, PostgreSQL, API externa)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Buscar livros por título ou autor",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Texto de busca",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Book"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/search/isbn/{isbn}": {
+            "get": {
+                "description": "Busca com estratégia de cache em 3 níveis (RAM, PostgreSQL, API externa)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Buscar livro por ISBN",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ISBN do livro",
+                        "name": "isbn",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Book"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -116,7 +213,19 @@ const docTemplate = `{
                 "author": {
                     "type": "string"
                 },
+                "cache_source": {
+                    "type": "string"
+                },
+                "cached_at": {
+                    "type": "string"
+                },
+                "cover_url": {
+                    "type": "string"
+                },
                 "created_at": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 },
                 "finished_at": {
@@ -130,6 +239,12 @@ const docTemplate = `{
                 },
                 "pages": {
                     "type": "integer"
+                },
+                "published_year": {
+                    "type": "integer"
+                },
+                "publisher": {
+                    "type": "string"
                 },
                 "read": {
                     "type": "boolean"

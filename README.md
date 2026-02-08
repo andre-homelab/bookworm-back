@@ -1,4 +1,5 @@
 # bookworm-back
+API rest em GO
 
 Backend REST em Go para gerenciamento de livros pessoais.
 
@@ -19,3 +20,5 @@ make api
 
 ## Endpoint implementado
 - `POST /api/v1/books`
+- `GET /api/v1/books/search/isbn/{isbn}`
+- `GET /api/v1/books/search?q=clean+code`

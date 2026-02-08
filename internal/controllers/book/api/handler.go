@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type BookHandler struct {
@@ -65,6 +67,68 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusCreated, book)
+}
+
+// @Summary     Buscar livro por ISBN
+// @Description Busca com estratégia de cache em 3 níveis (RAM, PostgreSQL, API externa)
+// @Tags        Books
+// @Produce     json
+// @Param       isbn path string true "ISBN do livro"
+// @Success     200 {object} models.Book
+// @Failure     400 {object} ErrorResponse
+// @Failure     404 {object} ErrorResponse
+// @Failure     500 {object} ErrorResponse
+// @Router      /books/search/isbn/{isbn} [get]
+func (h *BookHandler) SearchByISBN(w http.ResponseWriter, r *http.Request) {
+	isbn := chi.URLParam(r, "isbn")
+
+	book, source, err := h.bookService.SearchByISBN(r.Context(), isbn)
+	if err != nil {
+		if errors.Is(err, ErrInvalidInput) {
+			respondError(w, http.StatusBadRequest, "ISBN inválido", err)
+			return
+		}
+		if errors.Is(err, ErrBookNotFound) {
+			respondError(w, http.StatusNotFound, "Livro não encontrado", nil)
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Erro ao buscar livro", err)
+		return
+	}
+
+	w.Header().Set("X-Cache-Source", string(source))
+	respondJSON(w, http.StatusOK, book)
+}
+
+// @Summary     Buscar livros por título ou autor
+// @Description Busca com estratégia de cache em 3 níveis (RAM, PostgreSQL, API externa)
+// @Tags        Books
+// @Produce     json
+// @Param       q query string true "Texto de busca"
+// @Success     200 {array} models.Book
+// @Failure     400 {object} ErrorResponse
+// @Failure     404 {object} ErrorResponse
+// @Failure     500 {object} ErrorResponse
+// @Router      /books/search [get]
+func (h *BookHandler) SearchByTitleOrAuthor(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+
+	books, source, err := h.bookService.SearchByTitleOrAuthor(r.Context(), query)
+	if err != nil {
+		if errors.Is(err, ErrInvalidInput) {
+			respondError(w, http.StatusBadRequest, "Parâmetro q é obrigatório", err)
+			return
+		}
+		if errors.Is(err, ErrBookNotFound) {
+			respondError(w, http.StatusNotFound, "Livro não encontrado", nil)
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Erro ao buscar livros", err)
+		return
+	}
+
+	w.Header().Set("X-Cache-Source", string(source))
+	respondJSON(w, http.StatusOK, books)
 }
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {

@@ -40,6 +40,8 @@ func Execute(ctx context.Context, service *bookapi.Service) error {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/books", func(r chi.Router) {
 			r.Post("/", bookHandler.CreateBook)
+			r.Get("/search", bookHandler.SearchByTitleOrAuthor)
+			r.Get("/search/isbn/{isbn}", bookHandler.SearchByISBN)
 		})
 	})
 

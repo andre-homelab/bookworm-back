@@ -6,9 +6,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/inputs/api"
 	bookapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/api"
+	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/cache"
+	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/provider"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/repository"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/database"
 )
@@ -27,7 +30,11 @@ func main() {
 	}
 
 	repo := repository.NewDBStore(db)
-	service := bookapi.NewService(repo)
+	memoryCache := cache.NewLRUCache(1000)
+	googleProvider := provider.NewGoogleBooksProvider(3 * time.Second)
+	openLibraryProvider := provider.NewOpenLibraryProvider(3 * time.Second)
+	externalProvider := provider.NewCompositeProvider(googleProvider, openLibraryProvider)
+	service := bookapi.NewService(repo, memoryCache, externalProvider)
 
 	if err := api.Execute(ctx, service); err != nil {
 		log.Fatalf("erro ao executar API: %v", err)

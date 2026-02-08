@@ -9,12 +9,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/cache"
+	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/provider"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/models"
 )
 
 type stubStore struct {
 	createFn func(ctx context.Context, book *models.Book) error
 	getFn    func(ctx context.Context, id string) (*models.Book, error)
+	findFn   func(ctx context.Context, isbn string) (*models.Book, error)
+	searchFn func(ctx context.Context, query string, limit int) ([]models.Book, error)
+	upsertFn func(ctx context.Context, book *models.Book) error
 }
 
 func (s *stubStore) Create(ctx context.Context, book *models.Book) error {
@@ -31,6 +36,37 @@ func (s *stubStore) GetByID(ctx context.Context, id string) (*models.Book, error
 	return nil, nil
 }
 
+func (s *stubStore) FindByISBN(ctx context.Context, isbn string) (*models.Book, error) {
+	if s.findFn != nil {
+		return s.findFn(ctx, isbn)
+	}
+	return nil, nil
+}
+
+func (s *stubStore) SearchByTitleOrAuthor(ctx context.Context, query string, limit int) ([]models.Book, error) {
+	if s.searchFn != nil {
+		return s.searchFn(ctx, query, limit)
+	}
+	return nil, nil
+}
+
+func (s *stubStore) UpsertFromExternal(ctx context.Context, book *models.Book) error {
+	if s.upsertFn != nil {
+		return s.upsertFn(ctx, book)
+	}
+	return nil
+}
+
+type stubProvider struct{}
+
+func (s *stubProvider) SearchByISBN(ctx context.Context, isbn string) (*models.Book, error) {
+	return nil, provider.ErrNoResults
+}
+
+func (s *stubProvider) SearchByQuery(ctx context.Context, query string) ([]models.Book, error) {
+	return nil, provider.ErrNoResults
+}
+
 func decodeErrResp(t *testing.T, rec *httptest.ResponseRecorder) ErrorResponse {
 	t.Helper()
 	var errResp ErrorResponse
@@ -40,13 +76,18 @@ func decodeErrResp(t *testing.T, rec *httptest.ResponseRecorder) ErrorResponse {
 	return errResp
 }
 
+func newTestHandler(store Store) *BookHandler {
+	svc := NewService(store, cache.NewLRUCache(20), &stubProvider{})
+	return NewBookHandler(svc)
+}
+
 func TestBookHandlerCreateBook(t *testing.T) {
 	t.Parallel()
 
 	t.Run("invalid json", func(t *testing.T) {
 		t.Parallel()
 
-		handler := NewBookHandler(NewService(&stubStore{}))
+		handler := newTestHandler(&stubStore{})
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/books", strings.NewReader("{"))
 
@@ -64,7 +105,7 @@ func TestBookHandlerCreateBook(t *testing.T) {
 	t.Run("invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		handler := NewBookHandler(NewService(&stubStore{}))
+		handler := newTestHandler(&stubStore{})
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/books", strings.NewReader(`{"title":"","author":"A"}`))
 
@@ -87,7 +128,7 @@ func TestBookHandlerCreateBook(t *testing.T) {
 				return errors.New("db down")
 			},
 		}
-		handler := NewBookHandler(NewService(store))
+		handler := newTestHandler(store)
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/books", strings.NewReader(`{"title":"Livro","author":"Autor"}`))
 
@@ -110,7 +151,7 @@ func TestBookHandlerCreateBook(t *testing.T) {
 				return &models.Book{ID: id, Title: "Livro", Author: "Autor"}, nil
 			},
 		}
-		handler := NewBookHandler(NewService(store))
+		handler := newTestHandler(store)
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/books", strings.NewReader(`{"title":"Livro","author":"Autor"}`))
 
