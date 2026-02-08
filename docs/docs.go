@@ -21,6 +21,33 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/books": {
+            "get": {
+                "description": "Retorna todos os livros armazenados no banco",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Listar todos os livros",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Book"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Adiciona um novo livro ao catálogo pessoal",
                 "consumes": [
@@ -162,6 +189,107 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/books/{id}": {
+            "put": {
+                "description": "Atualiza os dados principais de um livro existente",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Atualizar livro por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do livro",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do livro",
+                        "name": "book",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UpdateBookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Book"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove um livro do catálogo pessoal",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Remover livro por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do livro",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -204,6 +332,35 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "title é obrigatório"
+                }
+            }
+        },
+        "api.UpdateBookRequest": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "type": "string",
+                    "example": "Robert C. Martin"
+                },
+                "finished_at": {
+                    "type": "string",
+                    "example": "2025-06-15T10:00:00Z"
+                },
+                "isbn": {
+                    "type": "string",
+                    "example": "9780132350884"
+                },
+                "pages": {
+                    "type": "integer",
+                    "example": 464
+                },
+                "read": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Clean Code"
                 }
             }
         },
