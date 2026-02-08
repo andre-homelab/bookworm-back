@@ -10,5 +10,5 @@ func AutoMigrate(db *gorm.DB) error {
 		return err
 	}
 
-	return db.AutoMigrate(&models.Book{}, &models.User{})
+	return db.AutoMigrate(&models.Book{}, &models.User{}, &models.UserBook{})
 }

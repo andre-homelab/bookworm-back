@@ -13,6 +13,8 @@ import (
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/cache"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/provider"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/repository"
+	mybookapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/mybook/api"
+	mybookrepo "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/mybook/repository"
 	userapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/api"
 	userrepo "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/repository"
 	"github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/security"
@@ -50,8 +52,10 @@ func main() {
 		log.Fatalf("erro ao configurar serviço de usuários: %v", err)
 	}
 	authMiddleware := userapi.NewAuthMiddleware(tokenManager, userService)
+	myBookRepository := mybookrepo.NewDBStore(db)
+	myBookService := mybookapi.NewService(myBookRepository)
 
-	if err := api.Execute(ctx, bookService, userService, authMiddleware); err != nil {
+	if err := api.Execute(ctx, bookService, userService, myBookService, authMiddleware); err != nil {
 		log.Fatalf("erro ao executar API: %v", err)
 	}
 }

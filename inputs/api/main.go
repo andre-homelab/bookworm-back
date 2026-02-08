@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/andre-felipe-wonsik-alves/bookworm-back/docs"
 	bookapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/book/api"
+	mybookapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/mybook/api"
 	userapi "github.com/andre-felipe-wonsik-alves/bookworm-back/internal/controllers/user/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,9 +26,16 @@ import (
 
 // @host      localhost:8080
 // @BasePath  /api/v1
-func Execute(ctx context.Context, bookService *bookapi.Service, userService *userapi.Service, authMiddleware *userapi.AuthMiddleware) error {
+func Execute(
+	ctx context.Context,
+	bookService *bookapi.Service,
+	userService *userapi.Service,
+	myBookService *mybookapi.Service,
+	authMiddleware *userapi.AuthMiddleware,
+) error {
 	bookHandler := bookapi.NewBookHandler(bookService)
 	userHandler := userapi.NewUserHandler(userService)
+	myBookHandler := mybookapi.NewMyBookHandler(myBookService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -65,6 +73,13 @@ func Execute(ctx context.Context, bookService *bookapi.Service, userService *use
 				r.Delete("/{id}", bookHandler.DeleteBook)
 				r.Get("/search", bookHandler.SearchByTitleOrAuthor)
 				r.Get("/search/isbn/{isbn}", bookHandler.SearchByISBN)
+			})
+
+			private.Route("/my-books", func(r chi.Router) {
+				r.Get("/", myBookHandler.ListMyBooks)
+				r.Post("/", myBookHandler.AddMyBook)
+				r.Put("/{id}", myBookHandler.UpdateMyBook)
+				r.Delete("/{id}", myBookHandler.DeleteMyBook)
 			})
 		})
 	})
