@@ -470,6 +470,216 @@ const docTemplate = `{
                 }
             }
         },
+        "/my-books": {
+            "get": {
+                "description": "Retorna apenas os livros da estante do usuário autenticado",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "MyBooks"
+                ],
+                "summary": "Listar estante do usuário",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.UserBook"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Vincula um livro existente à estante do usuário autenticado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "MyBooks"
+                ],
+                "summary": "Adicionar livro na estante",
+                "parameters": [
+                    {
+                        "description": "Dados da estante",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.AddMyBookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserBook"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/my-books/{id}": {
+            "put": {
+                "description": "Atualiza status/rating/notas de um item da estante do usuário autenticado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "MyBooks"
+                ],
+                "summary": "Atualizar item da estante",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do item da estante",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados da estante",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.UpdateMyBookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserBook"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove um item da estante do usuário autenticado",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "MyBooks"
+                ],
+                "summary": "Remover livro da estante",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do item da estante",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "description": "Retorna dados do usuário autenticado",
@@ -621,6 +831,35 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "api.AddMyBookRequest": {
+            "type": "object",
+            "properties": {
+                "book_id": {
+                    "type": "string",
+                    "example": "f4ac9f2d-3c5d-4709-8c7f-63cb9ef0f4bb"
+                },
+                "finished_at": {
+                    "type": "string",
+                    "example": "2026-02-10T10:00:00Z"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Lendo no kindle"
+                },
+                "rating": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "started_at": {
+                    "type": "string",
+                    "example": "2026-02-08T10:00:00Z"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "reading"
+                }
+            }
+        },
         "api.CreateBookRequest": {
             "type": "object",
             "properties": {
@@ -742,6 +981,31 @@ const docTemplate = `{
                 }
             }
         },
+        "api.UpdateMyBookRequest": {
+            "type": "object",
+            "properties": {
+                "finished_at": {
+                    "type": "string",
+                    "example": "2026-02-10T10:00:00Z"
+                },
+                "notes": {
+                    "type": "string",
+                    "example": "Excelente livro"
+                },
+                "rating": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "started_at": {
+                    "type": "string",
+                    "example": "2026-02-08T10:00:00Z"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "completed"
+                }
+            }
+        },
         "api.UpdatePasswordRequest": {
             "type": "object",
             "properties": {
@@ -856,6 +1120,44 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserBook": {
+            "type": "object",
+            "properties": {
+                "book": {
+                    "$ref": "#/definitions/models.Book"
+                },
+                "book_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "finished_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }

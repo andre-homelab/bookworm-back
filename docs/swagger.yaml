@@ -1,5 +1,26 @@
 basePath: /api/v1
 definitions:
+  api.AddMyBookRequest:
+    properties:
+      book_id:
+        example: f4ac9f2d-3c5d-4709-8c7f-63cb9ef0f4bb
+        type: string
+      finished_at:
+        example: "2026-02-10T10:00:00Z"
+        type: string
+      notes:
+        example: Lendo no kindle
+        type: string
+      rating:
+        example: 5
+        type: integer
+      started_at:
+        example: "2026-02-08T10:00:00Z"
+        type: string
+      status:
+        example: reading
+        type: string
+    type: object
   api.CreateBookRequest:
     properties:
       author:
@@ -85,6 +106,24 @@ definitions:
         example: Novo Nome
         type: string
     type: object
+  api.UpdateMyBookRequest:
+    properties:
+      finished_at:
+        example: "2026-02-10T10:00:00Z"
+        type: string
+      notes:
+        example: Excelente livro
+        type: string
+      rating:
+        example: 5
+        type: integer
+      started_at:
+        example: "2026-02-08T10:00:00Z"
+        type: string
+      status:
+        example: completed
+        type: string
+    type: object
   api.UpdatePasswordRequest:
     properties:
       current_password:
@@ -162,6 +201,31 @@ definitions:
       title:
         type: string
       updated_at:
+        type: string
+    type: object
+  models.UserBook:
+    properties:
+      book:
+        $ref: '#/definitions/models.Book'
+      book_id:
+        type: string
+      created_at:
+        type: string
+      finished_at:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      rating:
+        type: integer
+      started_at:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      user_id:
         type: string
     type: object
   security.TokenPair:
@@ -480,6 +544,145 @@ paths:
       summary: Buscar livro por ISBN
       tags:
       - Books
+  /my-books:
+    get:
+      description: Retorna apenas os livros da estante do usuário autenticado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.UserBook'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Listar estante do usuário
+      tags:
+      - MyBooks
+    post:
+      consumes:
+      - application/json
+      description: Vincula um livro existente à estante do usuário autenticado
+      parameters:
+      - description: Dados da estante
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.AddMyBookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.UserBook'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Adicionar livro na estante
+      tags:
+      - MyBooks
+  /my-books/{id}:
+    delete:
+      description: Remove um item da estante do usuário autenticado
+      parameters:
+      - description: ID do item da estante
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Remover livro da estante
+      tags:
+      - MyBooks
+    put:
+      consumes:
+      - application/json
+      description: Atualiza status/rating/notas de um item da estante do usuário autenticado
+      parameters:
+      - description: ID do item da estante
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados da estante
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateMyBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserBook'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_andre-felipe-wonsik-alves_bookworm-back_internal_controllers_user_api.ErrorResponse'
+      summary: Atualizar item da estante
+      tags:
+      - MyBooks
   /users/me:
     get:
       description: Retorna dados do usuário autenticado
