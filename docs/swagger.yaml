@@ -30,6 +30,27 @@ definitions:
         example: title é obrigatório
         type: string
     type: object
+  api.UpdateBookRequest:
+    properties:
+      author:
+        example: Robert C. Martin
+        type: string
+      finished_at:
+        example: "2025-06-15T10:00:00Z"
+        type: string
+      isbn:
+        example: "9780132350884"
+        type: string
+      pages:
+        example: 464
+        type: integer
+      read:
+        example: true
+        type: boolean
+      title:
+        example: Clean Code
+        type: string
+    type: object
   models.Book:
     properties:
       author:
@@ -75,6 +96,24 @@ info:
   version: "1.0"
 paths:
   /books:
+    get:
+      description: Retorna todos os livros armazenados no banco
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Book'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Listar todos os livros
+      tags:
+      - Books
     post:
       consumes:
       - application/json
@@ -102,6 +141,73 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Criar novo livro
+      tags:
+      - Books
+  /books/{id}:
+    delete:
+      description: Remove um livro do catálogo pessoal
+      parameters:
+      - description: ID do livro
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Remover livro por ID
+      tags:
+      - Books
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados principais de um livro existente
+      parameters:
+      - description: ID do livro
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do livro
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Book'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Atualizar livro por ID
       tags:
       - Books
   /books/search:

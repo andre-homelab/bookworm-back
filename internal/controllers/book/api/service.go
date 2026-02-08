@@ -19,7 +19,10 @@ var (
 
 type Store interface {
 	Create(ctx context.Context, book *models.Book) error
+	ListAll(ctx context.Context) ([]models.Book, error)
 	GetByID(ctx context.Context, id string) (*models.Book, error)
+	Update(ctx context.Context, book *models.Book) error
+	DeleteByID(ctx context.Context, id string) error
 	FindByISBN(ctx context.Context, isbn string) (*models.Book, error)
 	SearchByTitleOrAuthor(ctx context.Context, query string, limit int) ([]models.Book, error)
 	UpsertFromExternal(ctx context.Context, book *models.Book) error
@@ -83,6 +86,79 @@ func (s *Service) Create(
 	}
 
 	return created, nil
+}
+
+func (s *Service) ListBooks(ctx context.Context) ([]models.Book, error) {
+	return s.repo.ListAll(ctx)
+}
+
+func (s *Service) Update(
+	ctx context.Context,
+	id string,
+	title string,
+	author string,
+	isbn string,
+	pages int,
+	read bool,
+	finishedAt *time.Time,
+) (*models.Book, error) {
+	normalizedID := strings.TrimSpace(id)
+	if normalizedID == "" || strings.TrimSpace(title) == "" || strings.TrimSpace(author) == "" || pages < 0 {
+		return nil, ErrInvalidInput
+	}
+
+	current, err := s.repo.GetByID(ctx, normalizedID)
+	if err != nil {
+		return nil, err
+	}
+	if current == nil {
+		return nil, ErrBookNotFound
+	}
+
+	current.Title = strings.TrimSpace(title)
+	current.Author = strings.TrimSpace(author)
+	current.ISBN = strings.TrimSpace(isbn)
+	current.Pages = pages
+	current.Read = read
+	current.FinishedAt = finishedAt
+	current.UpdatedAt = time.Now().UTC()
+
+	if err := s.repo.Update(ctx, current); err != nil {
+		return nil, err
+	}
+
+	updated, err := s.repo.GetByID(ctx, current.ID)
+	if err != nil {
+		return nil, err
+	}
+	if updated == nil {
+		return nil, ErrBookNotFound
+	}
+
+	s.cache.Reset()
+	return updated, nil
+}
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+	normalizedID := strings.TrimSpace(id)
+	if normalizedID == "" {
+		return ErrInvalidInput
+	}
+
+	current, err := s.repo.GetByID(ctx, normalizedID)
+	if err != nil {
+		return err
+	}
+	if current == nil {
+		return ErrBookNotFound
+	}
+
+	if err := s.repo.DeleteByID(ctx, normalizedID); err != nil {
+		return err
+	}
+
+	s.cache.Reset()
+	return nil
 }
 
 func (s *Service) SearchByISBN(ctx context.Context, isbn string) (*models.Book, SearchSource, error) {
