@@ -13,7 +13,10 @@ import (
 
 type fakeStore struct {
 	createFn func(ctx context.Context, book *models.Book) error
+	listFn   func(ctx context.Context) ([]models.Book, error)
 	getFn    func(ctx context.Context, id string) (*models.Book, error)
+	updateFn func(ctx context.Context, book *models.Book) error
+	deleteFn func(ctx context.Context, id string) error
 	findFn   func(ctx context.Context, isbn string) (*models.Book, error)
 	searchFn func(ctx context.Context, query string, limit int) ([]models.Book, error)
 	upsertFn func(ctx context.Context, book *models.Book) error
@@ -26,11 +29,32 @@ func (f *fakeStore) Create(ctx context.Context, book *models.Book) error {
 	return f.createFn(ctx, book)
 }
 
+func (f *fakeStore) ListAll(ctx context.Context) ([]models.Book, error) {
+	if f.listFn == nil {
+		return nil, nil
+	}
+	return f.listFn(ctx)
+}
+
 func (f *fakeStore) GetByID(ctx context.Context, id string) (*models.Book, error) {
 	if f.getFn == nil {
 		return nil, nil
 	}
 	return f.getFn(ctx, id)
+}
+
+func (f *fakeStore) Update(ctx context.Context, book *models.Book) error {
+	if f.updateFn == nil {
+		return nil
+	}
+	return f.updateFn(ctx, book)
+}
+
+func (f *fakeStore) DeleteByID(ctx context.Context, id string) error {
+	if f.deleteFn == nil {
+		return nil
+	}
+	return f.deleteFn(ctx, id)
 }
 
 func (f *fakeStore) FindByISBN(ctx context.Context, isbn string) (*models.Book, error) {
@@ -217,6 +241,151 @@ func TestServiceSearchByISBN(t *testing.T) {
 		}
 		if provider.isbnHits != 1 {
 			t.Fatalf("provider calls = %d, want 1", provider.isbnHits)
+		}
+	})
+}
+
+func TestServiceListBooks(t *testing.T) {
+	t.Parallel()
+
+	store := &fakeStore{
+		listFn: func(ctx context.Context) ([]models.Book, error) {
+			return []models.Book{
+				{ID: "book-1", Title: "Clean Code", Author: "Robert C. Martin"},
+				{ID: "book-2", Title: "DDD", Author: "Eric Evans"},
+			}, nil
+		},
+	}
+	svc := newTestService(store, &fakeProvider{})
+
+	books, err := svc.ListBooks(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(books) != 2 {
+		t.Fatalf("books len = %d, want 2", len(books))
+	}
+	if books[0].ID != "book-1" {
+		t.Fatalf("first id = %q, want %q", books[0].ID, "book-1")
+	}
+}
+
+func TestServiceUpdate(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		stored := models.Book{
+			ID:     "book-1",
+			Title:  "Old",
+			Author: "Old Author",
+			Pages:  120,
+		}
+		store := &fakeStore{
+			getFn: func(ctx context.Context, id string) (*models.Book, error) {
+				bookCopy := stored
+				return &bookCopy, nil
+			},
+			updateFn: func(ctx context.Context, book *models.Book) error {
+				if book.Title != "New Title" {
+					t.Fatalf("title = %q, want %q", book.Title, "New Title")
+				}
+				stored = *book
+				return nil
+			},
+		}
+		svc := newTestService(store, &fakeProvider{})
+
+		book, err := svc.Update(context.Background(), "book-1", "New Title", "New Author", "123", 300, true, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if book == nil || book.Title != "New Title" {
+			t.Fatalf("unexpected book: %+v", book)
+		}
+	})
+
+	t.Run("invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		svc := newTestService(&fakeStore{}, &fakeProvider{})
+		book, err := svc.Update(context.Background(), "", "Title", "Author", "", 10, false, nil)
+		if !errors.Is(err, ErrInvalidInput) {
+			t.Fatalf("expected ErrInvalidInput, got %v", err)
+		}
+		if book != nil {
+			t.Fatalf("expected nil book, got %+v", book)
+		}
+	})
+
+	t.Run("book not found", func(t *testing.T) {
+		t.Parallel()
+
+		store := &fakeStore{
+			getFn: func(ctx context.Context, id string) (*models.Book, error) {
+				return nil, nil
+			},
+		}
+		svc := newTestService(store, &fakeProvider{})
+
+		book, err := svc.Update(context.Background(), "missing", "Title", "Author", "", 10, false, nil)
+		if !errors.Is(err, ErrBookNotFound) {
+			t.Fatalf("expected ErrBookNotFound, got %v", err)
+		}
+		if book != nil {
+			t.Fatalf("expected nil book, got %+v", book)
+		}
+	})
+}
+
+func TestServiceDelete(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		deletedID := ""
+		store := &fakeStore{
+			getFn: func(ctx context.Context, id string) (*models.Book, error) {
+				return &models.Book{ID: id}, nil
+			},
+			deleteFn: func(ctx context.Context, id string) error {
+				deletedID = id
+				return nil
+			},
+		}
+		svc := newTestService(store, &fakeProvider{})
+
+		if err := svc.Delete(context.Background(), "book-1"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if deletedID != "book-1" {
+			t.Fatalf("deletedID = %q, want %q", deletedID, "book-1")
+		}
+	})
+
+	t.Run("invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		svc := newTestService(&fakeStore{}, &fakeProvider{})
+		if err := svc.Delete(context.Background(), ""); !errors.Is(err, ErrInvalidInput) {
+			t.Fatalf("expected ErrInvalidInput, got %v", err)
+		}
+	})
+
+	t.Run("book not found", func(t *testing.T) {
+		t.Parallel()
+
+		store := &fakeStore{
+			getFn: func(ctx context.Context, id string) (*models.Book, error) {
+				return nil, nil
+			},
+		}
+		svc := newTestService(store, &fakeProvider{})
+
+		if err := svc.Delete(context.Background(), "missing"); !errors.Is(err, ErrBookNotFound) {
+			t.Fatalf("expected ErrBookNotFound, got %v", err)
 		}
 	})
 }

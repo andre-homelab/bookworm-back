@@ -22,6 +22,15 @@ func (s *DBStore) Create(ctx context.Context, book *models.Book) error {
 	return s.db.WithContext(ctx).Create(book).Error
 }
 
+func (s *DBStore) ListAll(ctx context.Context) ([]models.Book, error) {
+	var books []models.Book
+	err := s.db.WithContext(ctx).
+		Order("created_at desc").
+		Find(&books).Error
+
+	return books, err
+}
+
 func (s *DBStore) FindByISBN(ctx context.Context, isbn string) (*models.Book, error) {
 	var book models.Book
 
@@ -97,4 +106,12 @@ func (s *DBStore) GetByID(ctx context.Context, id string) (*models.Book, error) 
 	}
 
 	return &book, nil
+}
+
+func (s *DBStore) Update(ctx context.Context, book *models.Book) error {
+	return s.db.WithContext(ctx).Save(book).Error
+}
+
+func (s *DBStore) DeleteByID(ctx context.Context, id string) error {
+	return s.db.WithContext(ctx).Delete(&models.Book{}, "id = ?", id).Error
 }

@@ -12,6 +12,7 @@ type MemoryCache interface {
 	SetBook(key string, value *models.Book)
 	GetBookList(key string) ([]models.Book, bool)
 	SetBookList(key string, value []models.Book)
+	Reset()
 }
 
 type entry struct {
@@ -120,4 +121,12 @@ func (c *LRUCache) set(key string, value entry) {
 
 	c.order.Remove(oldest)
 	delete(c.items, oldest.Value.(entry).key)
+}
+
+func (c *LRUCache) Reset() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.items = make(map[string]*list.Element, c.maxSize)
+	c.order.Init()
 }

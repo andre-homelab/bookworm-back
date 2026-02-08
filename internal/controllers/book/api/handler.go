@@ -26,6 +26,15 @@ type CreateBookRequest struct {
 	FinishedAt *time.Time `json:"finished_at,omitempty" example:"2025-06-15T10:00:00Z"`
 }
 
+type UpdateBookRequest struct {
+	Title      string     `json:"title" example:"Clean Code"`
+	Author     string     `json:"author" example:"Robert C. Martin"`
+	ISBN       string     `json:"isbn,omitempty" example:"9780132350884"`
+	Pages      int        `json:"pages" example:"464"`
+	Read       bool       `json:"read" example:"true"`
+	FinishedAt *time.Time `json:"finished_at,omitempty" example:"2025-06-15T10:00:00Z"`
+}
+
 type ErrorResponse struct {
 	Error   string `json:"error" example:"dados inválidos"`
 	Message string `json:"message,omitempty" example:"title é obrigatório"`
@@ -67,6 +76,23 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusCreated, book)
+}
+
+// @Summary     Listar todos os livros
+// @Description Retorna todos os livros armazenados no banco
+// @Tags        Books
+// @Produce     json
+// @Success     200 {array} models.Book
+// @Failure     500 {object} ErrorResponse
+// @Router      /books [get]
+func (h *BookHandler) ListBooks(w http.ResponseWriter, r *http.Request) {
+	books, err := h.bookService.ListBooks(r.Context())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Erro ao listar livros", err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, books)
 }
 
 // @Summary     Buscar livro por ISBN
@@ -129,6 +155,83 @@ func (h *BookHandler) SearchByTitleOrAuthor(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("X-Cache-Source", string(source))
 	respondJSON(w, http.StatusOK, books)
+}
+
+// @Summary     Atualizar livro por ID
+// @Description Atualiza os dados principais de um livro existente
+// @Tags        Books
+// @Accept      json
+// @Produce     json
+// @Param       id path string true "ID do livro"
+// @Param       book body UpdateBookRequest true "Dados do livro"
+// @Success     200 {object} models.Book
+// @Failure     400 {object} ErrorResponse
+// @Failure     404 {object} ErrorResponse
+// @Failure     500 {object} ErrorResponse
+// @Router      /books/{id} [put]
+func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req UpdateBookRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "JSON inválido", err)
+		return
+	}
+
+	book, err := h.bookService.Update(
+		r.Context(),
+		id,
+		req.Title,
+		req.Author,
+		req.ISBN,
+		req.Pages,
+		req.Read,
+		req.FinishedAt,
+	)
+	if err != nil {
+		if errors.Is(err, ErrInvalidInput) {
+			respondError(w, http.StatusBadRequest, "Dados inválidos", err)
+			return
+		}
+		if errors.Is(err, ErrBookNotFound) {
+			respondError(w, http.StatusNotFound, "Livro não encontrado", nil)
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Erro ao atualizar livro", err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, book)
+}
+
+// @Summary     Remover livro por ID
+// @Description Remove um livro do catálogo pessoal
+// @Tags        Books
+// @Produce     json
+// @Param       id path string true "ID do livro"
+// @Success     204
+// @Failure     400 {object} ErrorResponse
+// @Failure     404 {object} ErrorResponse
+// @Failure     500 {object} ErrorResponse
+// @Router      /books/{id} [delete]
+func (h *BookHandler) DeleteBook(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	err := h.bookService.Delete(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, ErrInvalidInput) {
+			respondError(w, http.StatusBadRequest, "ID inválido", err)
+			return
+		}
+		if errors.Is(err, ErrBookNotFound) {
+			respondError(w, http.StatusNotFound, "Livro não encontrado", nil)
+			return
+		}
+		respondError(w, http.StatusInternalServerError, "Erro ao remover livro", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
