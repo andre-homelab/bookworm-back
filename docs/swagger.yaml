@@ -1,0 +1,173 @@
+basePath: /api/v1
+definitions:
+  api.CreateBookRequest:
+    properties:
+      author:
+        example: Robert C. Martin
+        type: string
+      finished_at:
+        example: "2025-06-15T10:00:00Z"
+        type: string
+      isbn:
+        example: "9780132350884"
+        type: string
+      pages:
+        example: 464
+        type: integer
+      read:
+        example: true
+        type: boolean
+      title:
+        example: Clean Code
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      error:
+        example: dados inválidos
+        type: string
+      message:
+        example: title é obrigatório
+        type: string
+    type: object
+  models.Book:
+    properties:
+      author:
+        type: string
+      cache_source:
+        type: string
+      cached_at:
+        type: string
+      cover_url:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      finished_at:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      pages:
+        type: integer
+      published_year:
+        type: integer
+      publisher:
+        type: string
+      read:
+        type: boolean
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API REST para gerenciamento de livros pessoais
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Bookworm API
+  version: "1.0"
+paths:
+  /books:
+    post:
+      consumes:
+      - application/json
+      description: Adiciona um novo livro ao catálogo pessoal
+      parameters:
+      - description: Dados do livro
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateBookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Book'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Criar novo livro
+      tags:
+      - Books
+  /books/search:
+    get:
+      description: Busca com estratégia de cache em 3 níveis (RAM, PostgreSQL, API
+        externa)
+      parameters:
+      - description: Texto de busca
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Book'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Buscar livros por título ou autor
+      tags:
+      - Books
+  /books/search/isbn/{isbn}:
+    get:
+      description: Busca com estratégia de cache em 3 níveis (RAM, PostgreSQL, API
+        externa)
+      parameters:
+      - description: ISBN do livro
+        in: path
+        name: isbn
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Book'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Buscar livro por ISBN
+      tags:
+      - Books
+swagger: "2.0"
