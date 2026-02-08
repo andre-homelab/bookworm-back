@@ -1,0 +1,95 @@
+basePath: /api/v1
+definitions:
+  api.CreateBookRequest:
+    properties:
+      author:
+        example: Robert C. Martin
+        type: string
+      finished_at:
+        example: "2025-06-15T10:00:00Z"
+        type: string
+      isbn:
+        example: "9780132350884"
+        type: string
+      pages:
+        example: 464
+        type: integer
+      read:
+        example: true
+        type: boolean
+      title:
+        example: Clean Code
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      error:
+        example: dados inválidos
+        type: string
+      message:
+        example: title é obrigatório
+        type: string
+    type: object
+  models.Book:
+    properties:
+      author:
+        type: string
+      created_at:
+        type: string
+      finished_at:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      pages:
+        type: integer
+      read:
+        type: boolean
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API REST para gerenciamento de livros pessoais
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Bookworm API
+  version: "1.0"
+paths:
+  /books:
+    post:
+      consumes:
+      - application/json
+      description: Adiciona um novo livro ao catálogo pessoal
+      parameters:
+      - description: Dados do livro
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateBookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Book'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Criar novo livro
+      tags:
+      - Books
+swagger: "2.0"
